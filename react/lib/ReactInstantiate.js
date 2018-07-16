@@ -60,20 +60,23 @@ export default class ReactInstantiate {
 		
 		if (this.nodeType === Constant.REACT_NODE) {
 			let componentObj = new this.currentElement.type(this.currentElement.props)
+			// component实例
+			this.componentObj = componentObj
+			this.componentObj.componentWillMount && this.componentObj.componentWillMount()
 			// 获取react render()出来的真实节点信息
 			let componentElement = componentObj.render()
 			if (!componentElement) {
 				return null
 			}
-			// component实例
-			this.componentObj = componentObj
 			this.componentElement = componentElement
 			// 监听setState方法
 			this.componentObj.__events.on('stateChange', () => {
 				this.receiveComponent()
 			})
-			this.componentInstance = new ReactInstantiate(componentElement, null)
-			return this.componentInstance.mount(parentNode)
+			this.componentInstance = new ReactInstantiate(this.componentElement, null)
+			let node = this.componentInstance.mount(parentNode)
+			this.componentObj.componentDidMount && this.componentObj.componentDidMount()
+			return node
 		}
 		
 		if (!this.nativeNode) {

@@ -132,9 +132,9 @@ export default class ReactUpdater {
 		}
 		
 		//类型修改
-		if (prev.nodeType != next.nodeType
-			|| (prev.nodeType == Constant.REACT_NODE && prev.currentElement.type !== next.currentElement.type)
-			|| (prev.childrenInstance && next.childrenInstance && prev.childrenInstance.length != next.childrenInstance.length)
+		if (prev.nodeType !== next.nodeType
+			|| (prev.nodeType === Constant.REACT_NODE && prev.currentElement.type !== next.currentElement.type)
+			|| (prev.childrenInstance && next.childrenInstance && prev.childrenInstance.length !== next.childrenInstance.length)
 		) {
 			this.replaceList.push({
 				prev: prev,
@@ -202,7 +202,7 @@ export default class ReactUpdater {
 		let maxIndex = clist.length - 1
 		let parentNode = instance.parentNode
 		
-		if (index == 0) {
+		if (index === 0) {
 			reactDom.nodeBefore(node, parentNode)
 			return
 		}
@@ -220,7 +220,7 @@ export default class ReactUpdater {
 			reactDom.nodeBefore(node, parentNode)
 			return
 		}
-		if (index == maxIndex) {
+		if (index === maxIndex) {
 			reactDom.nodeAfter(node, parentNode)
 		}
 	}

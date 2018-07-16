@@ -17,9 +17,17 @@ class App extends Component {
 		size: 5
 	}
 	
+	componentWillMount () {
+		console.log('componentWillMount')
+	}
+	
+	componentDidMount () {
+		console.log('componentDidMount')
+	}
+	
 	onClick () {
 		this.setState({
-			list: [4, 7, 3, 6 ],
+			list: [4, 7, 3, 6],
 			dis: !this.state.dis,
 			size: this.state.size += 1
 		})
