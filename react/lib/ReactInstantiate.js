@@ -1,4 +1,5 @@
 import reactDom from './ReactDom'
+import reactEvents from './ReactEvents'
 import Constant from '../constant'
 import Util from '../util'
 import ValueData from '../data'
@@ -78,7 +79,9 @@ export default class ReactInstantiate {
 		if (!this.nativeNode) {
 			this.nativeNode = reactDom.create(this.currentElement)
 			// 事件绑定
-			// TODO
+			if (this.nodeType === Constant.NATIVE_NODE && this.currentElement.props) {
+				reactEvents.register(this.nativeNode, this.currentElement.props)
+			}
 			if (parentNode) {
 				this.parentNode = parentNode
 				parentNode.appendChild(this.nativeNode)

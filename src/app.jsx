@@ -18,6 +18,7 @@ class App extends Component {
 	}
 	
 	onClick () {
+		console.log(12)
 		this.setState({
 			list: [4, 7, 3, 6],
 			dis: !this.state.dis,
@@ -50,6 +51,7 @@ class App extends Component {
 				<If condition={this.state.dis}>
 					down2
 				</If>
+				yangxi
 			</div>
 		)
 	}
