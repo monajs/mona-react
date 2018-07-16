@@ -18,9 +18,8 @@ class App extends Component {
 	}
 	
 	onClick () {
-		console.log(12)
 		this.setState({
-			list: [4, 7, 3, 6],
+			list: [4, 7, 3, 6 ],
 			dis: !this.state.dis,
 			size: this.state.size += 1
 		})
@@ -30,7 +29,9 @@ class App extends Component {
 		const { children } = this.props
 		return (
 			<div onClick={this.onClick.bind(this)} title={this.state.title}>
-				{children}
+				<If condition={!this.state.dis}>
+					{children}
+				</If>
 				<Choose>
 					<When condition={this.state.dis}>
 						<div>div测试</div>

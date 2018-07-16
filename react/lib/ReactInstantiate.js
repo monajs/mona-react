@@ -1,5 +1,6 @@
 import reactDom from './ReactDom'
 import reactEvents from './ReactEvents'
+import ReactUpdater from './ReactUpdater'
 import Constant from '../constant'
 import Util from '../util'
 import ValueData from '../data'
@@ -69,8 +70,7 @@ export default class ReactInstantiate {
 			this.componentElement = componentElement
 			// 监听setState方法
 			this.componentObj.__events.on('stateChange', () => {
-				// this.receiveComponent()
-				// TODO
+				this.receiveComponent()
 			})
 			this.componentInstance = new ReactInstantiate(componentElement, null)
 			return this.componentInstance.mount(parentNode)
@@ -96,6 +96,14 @@ export default class ReactInstantiate {
 		return this.nativeNode
 	}
 	
+	//获取原生的节点
+	getNativeNode () {
+		if (this.componentInstance) {
+			return this.componentInstance.getNativeNode()
+		}
+		return this.nativeNode
+	}
+	
 	// 挂载子节点
 	mountChildren (parentNode) {
 		if (!this.childrenInstance || this.childrenInstance.length === 0) {
@@ -111,5 +119,30 @@ export default class ReactInstantiate {
 				v.mount(parentNode)
 			}
 		})
+	}
+	
+	// 节点检查，适用react节点
+	receiveComponent (newInstance) {
+		if (this.componentObj && Util.isFun(this.componentObj.shouldcomponentupdate) && !this.componentObj.shouldcomponentupdate()) {
+			return
+		}
+		
+		//react节点检测更新
+		if (this.nodeType === Constant.REACT_NODE) {
+			let element = this.componentObj.render()
+			let newComponentInstance = new ReactInstantiate(element)
+			this.componentInstance.receiveComponent(newComponentInstance)
+			return
+		}
+		
+		if (!this.reactUpdater) {
+			this.reactUpdater = new ReactUpdater(this)
+		}
+		
+		this.reactUpdater.compareInstance(newInstance)
+		
+		console.log(this.reactUpdater)
+		
+		this.reactUpdater.run()
 	}
 }
