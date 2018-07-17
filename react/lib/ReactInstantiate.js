@@ -2,52 +2,61 @@ import reactDom from './ReactDom'
 import ReactUpdater from './ReactUpdater'
 import Constant from '../constant'
 import Util from '../util'
-import ValueData from '../data'
 
 export default class ReactInstantiate {
-	constructor (element, key) {
+	constructor (element, key, owner) {
 		// react节点
 		this.currentElement = element
 		// 节点唯一key
 		this.key = key
 		// 节点类型
 		this.nodeType = reactDom.getElementType(element)
-		// 节点实例化数据结构
-		this.childrenInstance = this.instanceChildren()
+		if (this.nodeType === Constant.REACT_NODE || this.nodeType === Constant.NATIVE_NODE) {
+			!this.currentElement._owner && (this.currentElement._owner = owner)
+			
+			// TODO 优化合并到instanceChildren中去
+			if (this.currentElement.props.children) {
+				this.currentElement.props.children = Util.toArray(this.currentElement.props.children)
+				this.currentElement.props.children.forEach((v, i) => {
+					if (null !== v && typeof v === 'object') {
+						if (!v._owner) {
+							v._owner = owner
+						}
+						v.key = v.key ? v.key : i + ''
+					}
+				})
+			}
+			
+			const child = Util.toArray(this.currentElement.props.children)
+			// 节点实例化数据结构
+			this.childrenInstance = this.instanceChildren(child, owner)
+		}
 	}
 	
 	// 递归实例化所有节点，忽略react组件节点
-	instanceChildren () {
-		if (this.nodeType === Constant.EMPTY_NODE || this.nodeType === Constant.TEXT_NODE || !this.currentElement.props || !this.currentElement.props.children) {
-			return
-		}
-		
-		let child = Util.toArray(this.currentElement.props.children)
+	instanceChildren (child, owner) {
 		let childrenInstance = []
 		// 为每一个节点添加唯一key
 		child.forEach((v, i) => {
-			let key = null
+			let key = i + ''
 			if (null !== v && typeof v === 'object' && v.key) {
-				key = '__@_' + v.key
+				key = v.key
 			}
 			if (Util.isArray(v)) {
-				let c = []
-				v.forEach((item, index) => {
-					let itemKey = '__$_' + i + '_' + index
-					if (null !== v && typeof v === 'object') {
-						if (!item.key) {
-							console.error(ValueData.keyNeedMsg)
-						} else {
-							itemKey = '__@_' + i + '_' + item.key
-						}
-					}
-					c.push(new ReactInstantiate(item, itemKey))
-				})
-				childrenInstance.push(c)
+				
+				let cIns = this.instanceChildren(v, owner)
+				cIns.parentList = childrenInstance
+				cIns.parentInstance = this
+				cIns.key = key
+				childrenInstance.push(cIns)
 			} else {
-				childrenInstance.push(new ReactInstantiate(v, key))
+				let cIns = new ReactInstantiate(v, key)
+				cIns.parentList = childrenInstance
+				cIns.parentInstance = this
+				childrenInstance.push(cIns)
 			}
 		})
+		
 		return childrenInstance
 	}
 	
@@ -61,7 +70,7 @@ export default class ReactInstantiate {
 			let componentObj = new this.currentElement.type(this.currentElement.props)
 			// component实例
 			this.componentObj = componentObj
-			this.componentObj._reactInternalInstance = this;
+			this.componentObj._reactInternalInstance = this
 			this.componentObj.componentWillMount && this.componentObj.componentWillMount()
 			// 获取react render()出来的真实节点信息
 			let componentElement = componentObj.render()
@@ -96,7 +105,7 @@ export default class ReactInstantiate {
 		return this.nativeNode
 	}
 	
-	//获取原生的节点
+	// 获取原生的节点
 	getNativeNode () {
 		if (this.componentInstance) {
 			return this.componentInstance.getNativeNode()

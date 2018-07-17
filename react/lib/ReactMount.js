@@ -3,6 +3,7 @@ import ReactInstantiate from './ReactInstantiate'
 class ReactMount {
 	render (nextElement, container, callback) {
 		let instance = new ReactInstantiate(nextElement, null, true)
+		
 		console.log(instance)
 		let node = instance.mount(null, true)
 		container.appendChild(node)
