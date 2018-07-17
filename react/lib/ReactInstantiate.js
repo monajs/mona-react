@@ -1,5 +1,4 @@
 import reactDom from './ReactDom'
-import reactEvents from './ReactEvents'
 import ReactUpdater from './ReactUpdater'
 import Constant from '../constant'
 import Util from '../util'
@@ -62,6 +61,7 @@ export default class ReactInstantiate {
 			let componentObj = new this.currentElement.type(this.currentElement.props)
 			// component实例
 			this.componentObj = componentObj
+			this.componentObj._reactInternalInstance = this;
 			this.componentObj.componentWillMount && this.componentObj.componentWillMount()
 			// 获取react render()出来的真实节点信息
 			let componentElement = componentObj.render()
@@ -69,10 +69,6 @@ export default class ReactInstantiate {
 				return null
 			}
 			this.componentElement = componentElement
-			// 监听setState方法
-			this.componentObj.__events.on('stateChange', () => {
-				this.receiveComponent()
-			})
 			this.componentInstance = new ReactInstantiate(this.componentElement, null)
 			let node = this.componentInstance.mount(parentNode)
 			this.componentObj.componentDidMount && this.componentObj.componentDidMount()
@@ -92,7 +88,8 @@ export default class ReactInstantiate {
 		}
 		
 		this.nativeNode['__reactInstance'] = {
-			_currentElement: this.currentElement
+			_currentElement: this.currentElement,
+			_instance: this
 		}
 		
 		this.mountChildren(this.nativeNode)
