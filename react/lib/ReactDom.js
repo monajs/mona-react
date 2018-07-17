@@ -1,5 +1,6 @@
 import Util from '../util'
 import Constant from '../constant'
+import DOMPropertyConfig from './DOMPropertyConfig'
 
 // 只包含原生节点的创建
 // react节点在实例化后返回原生节点
@@ -106,11 +107,133 @@ class ReactDom {
 	// 节点插入节点后
 	nodeInsertAfter (newEl, targetEl) {
 		let parentEl = targetEl.parentNode
-		if (parentEl.lastChild == targetEl) {
+		if (parentEl.lastChild === targetEl) {
 			parentEl.appendChild(newEl)
 		} else {
 			parentEl.insertBefore(newEl, targetEl.nextSibling)
 		}
+	}
+	
+	prefixList = [
+		'transform',
+		'transition'
+	]
+	cssNumber = [
+		'column-count',
+		'fill-opacity',
+		'font-weight',
+		'line-height',
+		'opacity',
+		'order',
+		'orphans',
+		'widows',
+		'z-index',
+		'zoom'
+	]
+	
+	//将样式对象转化为可使用的样式对象
+	parseStyleObj (data) {
+		let _data = {}
+		Object.keys(data).forEach((v) => {
+			Util.upperToLine(v)
+			let name = Util.upperToLine(v)
+			let val = data[v]
+			if (typeof(val) == 'number' && this.cssNumber.indexOf(name) < 0) {
+				val = val + 'px'
+			}
+			_data[name] = val
+			if (this.prefixList.indexOf(name) >= 0) {
+				_data['-webkit-' + name] = val
+			}
+		})
+		return _data
+	}
+	
+	styleObjStringify (styleObj) {
+		if (!styleObj || Object.keys(styleObj).length == 0) {
+			return ''
+		}
+		return Object.keys(styleObj).map((v) => {
+			return v + ':' + styleObj[v]
+		}).join(';')
+	}
+	
+	//dom信息绑定
+	parse (node, props) {
+		if (!props) {
+			return
+		}
+		let propKeys = Object.keys(props)
+		
+		//className
+		if (Util.has(props, 'className')) {
+			if (props.className) {
+				node.className = props.className
+			}
+			Util.arrayDelete(propKeys, 'className')
+		}
+		
+		//style
+		if (Util.has(props, 'style')) {
+			let style = this.parseStyleObj(props.style)
+			node.setAttribute('style', this.styleObjStringify(style))
+			Util.arrayDelete(propKeys, 'style')
+		}
+		
+		//defaultValue
+		if (Util.has(props, 'defaultValue')) {
+			node.setAttribute('value', props.defaultValue)
+			Util.arrayDelete(propKeys, 'defaultValue')
+		}
+		
+		//dangerouslySetInnerHTML
+		if (Util.has(props, 'dangerouslySetInnerHTML')) {
+			if (!props.dangerouslySetInnerHTML || !props.dangerouslySetInnerHTML.__html) {
+				return
+			}
+			node.innerHTML = props.dangerouslySetInnerHTML.__html
+			Util.arrayDelete(propKeys, 'dangerouslySetInnerHTML')
+		}
+		
+		propKeys.forEach((v) => {
+			let val = props[v]
+			if (Util.isUndefined(val)) {
+				return
+			}
+			
+			if (DOMPropertyConfig.isProperty(v)) {
+				let attr = Util.upperToLine(v)
+				if (v === 'htmlFor') {
+					attr = 'for'
+				}
+				if (val === false) {
+					node.removeAttribute(attr)
+					return
+				}
+				if (val === true) {
+					node.setAttribute(attr, 'true')
+				} else {
+					node.setAttribute(attr, val)
+				}
+				return
+			}
+			
+			//data-*
+			if (/^data-.+/.test(v) || /^aria-.+/.test(v)) {
+				node.setAttribute(v, val)
+				return
+			}
+			
+			//事件绑定
+			let e = DOMPropertyConfig.getEventName(v)
+			if (e) {
+				if (Util.isFun(val)) {
+					node.addEventListener(e, (ev) => {
+						val()
+					}, false)
+				}
+			}
+		})
 	}
 	
 }

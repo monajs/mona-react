@@ -52,7 +52,7 @@ class App extends Component {
 					up
 				</If>
 				<For each="item" of={this.state.list}>
-					<div key={item} id={item}>循环{item}</div>
+					<div className="klass" key={item} id={item}>循环{item}</div>
 				</For>
 				<If condition={this.state.dis}>
 					down

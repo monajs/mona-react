@@ -83,7 +83,7 @@ export default class ReactInstantiate {
 			this.nativeNode = reactDom.create(this.currentElement)
 			// 事件绑定
 			if (this.nodeType === Constant.NATIVE_NODE && this.currentElement.props) {
-				reactEvents.register(this.nativeNode, this.currentElement.props)
+				reactDom.parse(this.nativeNode, this.currentElement.props)
 			}
 			if (parentNode) {
 				this.parentNode = parentNode
