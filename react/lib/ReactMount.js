@@ -12,8 +12,10 @@ export default class ReactMount {
 			})
 		} else {
 			let instance = new ReactInstantiate(nextElement, null, true)
+			Util.log('实例化节点:', instance)
 			container.innerHTML = ''
-			instance.mount(container)
+			const nativeNode = instance.mount(container)
+			Util.log('挂载创建的dom:', nativeNode)
 		}
 	}
 	

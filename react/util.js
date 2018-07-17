@@ -168,6 +168,25 @@ class Util {
 		console.log('--Mona')
 		Function.prototype.apply.call(console.log, console, arguments)
 	}
+	
+	// 获取key唯一的list
+	getUniqueList (list) {
+		let keyList = []
+		let resList = []
+		list.forEach((v, i) => {
+			if (v && v.key) {
+				if (keyList.indexOf(v.key) === -1) {
+					keyList.push(v.key)
+					// TODO 优化push方式，直接从数组删除，效率很更高
+					resList.push(v);
+				}
+			}else {
+				resList.push(v);
+			}
+		})
+		return resList
+		
+	}
 }
 
 export default new Util

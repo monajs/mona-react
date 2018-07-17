@@ -2,6 +2,7 @@ import reactDom from './ReactDom'
 import ReactUpdater from './ReactUpdater'
 import Constant from '../constant'
 import Util from '../util'
+import ValueData from '../data'
 
 export default class ReactInstantiate {
 	constructor (element, key, owner) {
@@ -34,16 +35,19 @@ export default class ReactInstantiate {
 	}
 	
 	// 递归实例化所有节点，忽略react组件节点
-	instanceChildren (child, owner) {
+	instanceChildren (children, owner) {
 		let childrenInstance = []
 		// 为每一个节点添加唯一key
-		child.forEach((v, i) => {
+		
+		const uniqueChild = this.checkChildren(children)
+		uniqueChild && (children = uniqueChild)
+		children.forEach((v, i) => {
 			let key = '$mona_' + i
 			if (null !== v && typeof v === 'object' && v.key) {
 				key = v.key
 			}
+			
 			if (Util.isArray(v)) {
-				
 				let cIns = this.instanceChildren(v, owner)
 				cIns.parentList = childrenInstance
 				cIns.parentInstance = this
@@ -58,6 +62,17 @@ export default class ReactInstantiate {
 		})
 		
 		return childrenInstance
+	}
+	
+	// 检查children中key的唯一性
+	// 返回去重的带唯一key的数组
+	checkChildren (children) {
+		let childrenList = Util.getUniqueList(children)
+		if (childrenList.length === children.length) {
+			return
+		}
+		console.error(ValueData.keyNeedMsg)
+		return childrenList
 	}
 	
 	// 挂载节点

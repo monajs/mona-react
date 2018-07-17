@@ -1,6 +1,6 @@
 import React, { Component, version } from 'react'
 
-React.setEnv('development')
+// React.setEnv('development')
 import { render } from 'react-dom'
 
 class App2 extends Component {
@@ -14,22 +14,20 @@ class App2 extends Component {
 
 class App extends Component {
 	state = {
-		list: [1, 2, 3, 4, 5],
+		list: ['a', 'b', 'c', 'd', 'c'],
 		title: '杨玺测试',
 		size: 5
 	}
 	
 	componentWillMount () {
-		console.log('componentWillMount')
 	}
 	
 	componentDidMount () {
-		console.log('componentDidMount')
 	}
 	
 	onClick () {
 		this.setState({
-			list: [4, 7, 3, 6],
+			list: ['c', 'b', 'f', 'd', 'f'],
 			dis: !this.state.dis,
 			size: this.state.size += 1
 		})
@@ -54,7 +52,7 @@ class App extends Component {
 					up
 				</If>
 				<For each="item" of={this.state.list}>
-					<div className="klass" key={item} id={item}>循环{item}</div>
+					<div className="klass" key={item} id={item}>{item}</div>
 				</For>
 				<If condition={this.state.dis}>
 					down
@@ -77,6 +75,5 @@ let a = (
 		</App>
 	</div>
 )
-console.log(a)
 render(a, document.getElementById('appWrapper'))
 
