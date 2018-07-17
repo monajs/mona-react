@@ -165,6 +165,7 @@ class Util {
 			return
 		}
 		
+		console.log('\n--Mona')
 		Function.prototype.apply.call(console.log, console, arguments)
 	}
 }

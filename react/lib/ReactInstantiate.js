@@ -38,7 +38,7 @@ export default class ReactInstantiate {
 		let childrenInstance = []
 		// 为每一个节点添加唯一key
 		child.forEach((v, i) => {
-			let key = i + ''
+			let key = '$mona_' + i
 			if (null !== v && typeof v === 'object' && v.key) {
 				key = v.key
 			}
@@ -61,39 +61,29 @@ export default class ReactInstantiate {
 	}
 	
 	// 挂载节点
+	// 返回生成的dom信息
 	mount (parentNode) {
 		if (this.nodeType === Constant.EMPTY_NODE) {
 			return null
 		}
 		
 		if (this.nodeType === Constant.REACT_NODE) {
-			let componentObj = new this.currentElement.type(this.currentElement.props)
-			// component实例
-			this.componentObj = componentObj
-			this.componentObj._reactInternalInstance = this
-			this.componentObj.componentWillMount && this.componentObj.componentWillMount()
-			// 获取react render()出来的真实节点信息
-			let componentElement = componentObj.render()
-			if (!componentElement) {
-				return null
+			this.nativeNode = this.mountComponent()
+			if (parentNode) {
+				this.nativeNode && parentNode.appendChild(this.nativeNode)
+				this.mountComplete(parentNode)
 			}
-			this.componentElement = componentElement
-			this.componentInstance = new ReactInstantiate(this.componentElement, null)
-			let node = this.componentInstance.mount(parentNode)
-			this.componentObj.componentDidMount && this.componentObj.componentDidMount()
-			return node
+			return this.nativeNode
 		}
 		
+		// 实例未被创建成浏览器节点
 		if (!this.nativeNode) {
 			this.nativeNode = reactDom.create(this.currentElement)
-			// 事件绑定
+			// 将react的节点属性转化成原生识别的节点属性
 			if (this.nodeType === Constant.NATIVE_NODE && this.currentElement.props) {
 				reactDom.parse(this.nativeNode, this.currentElement.props)
 			}
-			if (parentNode) {
-				this.parentNode = parentNode
-				parentNode.appendChild(this.nativeNode)
-			}
+			this.refToOwner(this)
 		}
 		
 		this.nativeNode['__reactInstance'] = {
@@ -101,8 +91,116 @@ export default class ReactInstantiate {
 			_instance: this
 		}
 		
-		this.mountChildren(this.nativeNode)
+		// 创建子节点nativeNode并插入父级节点
+		if (this.childrenInstance && this.childrenInstance.length > 0) {
+			let children = ReactInstantiate.mountChildren(this.childrenInstance)
+			children && this.nativeNode.appendChild(children)
+		}
+		
+		if (parentNode) {
+			this.nativeNode && parentNode.appendChild(this.nativeNode)
+			// 挂载结束
+			this.mountComplete(parentNode)
+		}
+		
 		return this.nativeNode
+	}
+	
+	// 挂载component
+	// 返回component对应的dom信息
+	mountComponent () {
+		this.componentObj = new this.currentElement.type(this.currentElement.props)
+		// componentDidMount生命周期钩子函数执行点
+		this.componentObj.componentWillMount && this.componentObj.componentWillMount()
+		
+		// component对应的虚拟节点dom
+		const componentElement = this.componentObj.render()
+		
+		this.componentObj._reactInternalInstance = this
+		
+		this._instance = this.componentObj // 存储节点_owner
+		
+		// 获取虚拟节点对应的实例对象
+		this.componentInstance = new ReactInstantiate(componentElement, null, this)
+		this.componentInstance.parentInstance = this
+		// 节点挂载
+		const nativeNode = this.componentInstance.mount()
+		
+		this.refToOwner(this)
+		return nativeNode
+	}
+	
+	// 挂载子节点
+	// 返回子节点实例的nativeNode
+	static mountChildren (children) {
+		if (!children) {
+			return
+		}
+		if (!Util.isArray(children)) {
+			return children.mount()
+		}
+		// 创建临时虚拟节点
+		let virtualDom = document.createDocumentFragment()
+		children.forEach((v) => {
+			if (Util.isArray(v)) {
+				const node = ReactInstantiate.mountChildren(v)
+				virtualDom.appendChild(node)
+			} else {
+				const node = v.mount()
+				node && virtualDom.appendChild(node)
+			}
+		})
+		return virtualDom
+	}
+	
+	// 挂载结束后的执行函数
+	// 更改挂载状态
+	// 执行生命周期钩子函数
+	mountComplete (parentNode) {
+		this.parentNode = parentNode
+		// 挂载完成的状态
+		this.hasMount = true
+		if (this.nodeType === Constant.REACT_NODE) {
+			this.componentInstance.mountComplete(parentNode)
+			// componentDidMount生命周期钩子函数执行点
+			this.componentObj.componentDidMount && this.componentObj.componentDidMount()
+		} else {
+			ReactInstantiate.childrenMountComplete(this.childrenInstance, this.nativeNode)
+		}
+	}
+	
+	// 递归通知子节点更改挂载结束的状态
+	// 执行子节点生命周期钩子函数
+	static childrenMountComplete (children, parentNode) {
+		if (!children) {
+			return
+		}
+		if (!Util.isArray(children)) {
+			return children.mountComplete(parentNode)
+		}
+		if (children.length === 0) {
+			return
+		}
+		children.forEach((v) => {
+			if (Util.isArray(v)) {
+				children.parentNode = parentNode
+				ReactInstantiate.childrenMountComplete(v, parentNode)
+			} else {
+				v.mountComplete(parentNode)
+			}
+		})
+	}
+	
+	// 识别节点的ref属性, 并返回dom信息
+	// 是react节点的化返回component实例信息，否则返回节点原生信息
+	refToOwner (instance) {
+		if ((instance.nodeType === Constant.REACT_NODE || instance.nodeType === Constant.NATIVE_NODE )
+			&& instance.currentElement.ref && instance.currentElement._owner) {
+			let ownerObj = instance.currentElement._owner.componentObj
+			
+			ownerObj.refs = ownerObj.refs || {}
+			ownerObj.refs[instance.currentElement.ref] = instance.componentObj || instance.nativeNode
+		}
 	}
 	
 	// 获取原生的节点
