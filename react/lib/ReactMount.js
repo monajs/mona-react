@@ -16,5 +16,29 @@ export default class ReactMount {
 			instance.mount(container)
 		}
 	}
+	
+	static unmountComponentAtNode (node) {
+		if (!(node instanceof Node)) {
+			return
+		}
+		Util.forEach(node.children, (v) => {
+			let ins = Util.getDomInstance(v)
+			if (ins) {
+				ins._instance.willUnmount()
+				reactDom.nodeRemove(v)
+				ins._instance.unmount()
+			}
+		})
+	}
+	
+	static findDOMNode (componentOrElement) {
+		if (!componentOrElement) {
+			return
+		}
+		if (componentOrElement instanceof Node) {
+			return componentOrElement
+		}
+		return componentOrElement._reactInternalInstance.getNativeNode()
+	};
 }
 

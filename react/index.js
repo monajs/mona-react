@@ -7,7 +7,7 @@ class React {
 	version = Constant.VERSION
 	Component = Component
 	Children = Children
-	createElement = ReactElement.createElement
+	cloneElement = ReactElement.cloneElement
 	env = 'production'
 	
 	setEnv (env) {

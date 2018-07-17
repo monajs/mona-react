@@ -2,7 +2,6 @@
 import Constant from '../constant'
 
 class ReactElement {
-	
 	//创建react 节点对象
 	createElement (type, config, children) {
 		const { key, ref, __self, __source, ...eleProps } = config || {}
@@ -32,7 +31,9 @@ class ReactElement {
 		}
 	}
 	
-	cloneElement () {
+	cloneElement (element, props) {
+		let _props = Object.assign({}, element.props, props)
+		return Object.assign({}, element, { props: _props })
 	}
 }
 
