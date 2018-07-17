@@ -124,7 +124,6 @@ export default class ReactInstantiate {
 					child.mount(parentNode)
 				})
 			} else {
-				console.log(parentNode)
 				v.mount(parentNode)
 			}
 		})

@@ -1,20 +1,22 @@
 import ReactInstantiate from './ReactInstantiate'
+import Util from '../util'
 
-class ReactMount {
-	render (nextElement, container, callback) {
-		let instance = new ReactInstantiate(nextElement, null, true)
-		
-		console.log(instance)
-		let node = instance.mount(null, true)
-		container.appendChild(node)
-	}
-	
-	//根据实例化节点数挂载、更新、卸载节点
-	update () {
-	}
-	
-	unmountComponentAtNode () {
+export default class ReactMount {
+	static render (nextElement, container, callback) {
+		// 支持传递数组dom节点
+		// 目前没有这个场景
+		// 先留个坑
+		if (Util.isArray(nextElement)) {
+			nextElement.forEach(v => {
+				ReactMount.render(v, container, callback)
+			})
+		} else {
+			let instance = new ReactInstantiate(nextElement, null, true)
+			
+			Util.log(instance)
+			let node = instance.mount(null, true)
+			container.appendChild(node)
+		}
 	}
 }
 
-export default new ReactMount

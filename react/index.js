@@ -8,6 +8,11 @@ class React {
 	Component = Component
 	Children = Children
 	createElement = ReactElement.createElement
+	env = 'production'
+	
+	setEnv (env) {
+		this.env = env
+	}
 }
 
 module.exports = new React

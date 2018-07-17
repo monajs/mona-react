@@ -1,3 +1,5 @@
+import React from './index'
+
 class Util {
 	//解决像NodeList这样，不是数组的循环问题
 	forEach (v, fun) {
@@ -158,6 +160,13 @@ class Util {
 		return owner._instance
 	};
 	
+	log () {
+		if (React.env !== 'development') {
+			return
+		}
+		
+		Function.prototype.apply.call(console.log, console, arguments)
+	}
 }
 
 export default new Util

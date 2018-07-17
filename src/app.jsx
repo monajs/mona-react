@@ -1,4 +1,6 @@
 import React, { Component, version } from 'react'
+
+React.setEnv('development')
 import { render } from 'react-dom'
 
 class App2 extends Component {
@@ -75,6 +77,5 @@ let a = (
 		</App>
 	</div>
 )
-console.log(a)
 render(a, document.getElementById('appWrapper'))
 
