@@ -77,5 +77,6 @@ let a = (
 		</App>
 	</div>
 )
+console.log(a)
 render(a, document.getElementById('appWrapper'))
 

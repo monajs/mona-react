@@ -1,301 +1,514 @@
-import reactDom from './ReactDom'
-import Util from '../util'
 import Constant from '../constant'
+import reactDom from './ReactDom'
+import ReactInstantiate from './ReactInstantiate'
+import Util from '../util'
+
+//更新类型
+let UPDATE_TYPES = {
+	MOVE: 1,
+	REMOVE: 2,
+	INSERT: 3,
+	REPLACE: 4,
+	UPDATE: 5
+}
 
 export default class ReactUpdater {
+	changeList = []
+	hasChange = false
+	
 	constructor (instance) {
-		this.componentInstance = instance
-		this.length = this.componentInstance.childrenInstance.length
+		this.instance = instance
 	}
 	
-	addList = []
-	delList = []
-	replaceList = []
-	updateList = []
-	listChange = []
-	listMove = []
-	listAdd = []
-	listDel = []
-	
-	// 实例对比
-	// 未加载的节点以空节点的形式存在子节点实例中
-	// this.componentInstance.length === newInstance.childrenInstance.length
-	compareInstance (newInstance) {
-		this.componentInstance.childrenInstance.forEach((v, i) => {
-			this.compare(v, newInstance.childrenInstance[i])
-		})
+	clear () {
+		this.changeList = []
 	}
 	
-	compare (prev, next) {
-		// 两个都是列表
-		if (Util.isArray(prev) && Util.isArray(next)) {
-			let nextKeys = next.map((v) => {
-				return v.key
-			})
-			let prevObj = {}
-			prev.forEach((v, i) => {
-				let index = nextKeys.indexOf(v.key)
-				if (index < 0) {
-					//删除节点
-					this.listChange.push({
-						type: 'del',
-						prevList: prev,
-						item: v
-					})
-					return
-				}
-				prevObj[v.key] = v
-			})
+	// 节点对比
+	// 返回节点对比结果
+	compare (newInstance) {
+		
+		let childrenChange = false
+		let selfChange = this.compareInstance(this.instance, newInstance)
+		let nodeType = this.instance.nodeType
+		this.isReactNode = nodeType == Constant.REACT_NODE
+		
+		if ((!selfChange || selfChange == 'update') && (nodeType == Constant.NATIVE_NODE || this.isReactNode)) {
 			
-			//prevKeys;
-			let referKeys = prev.map((v) => {
-				return v.key
-			})
-			let currentInstance
-			next.forEach((v, i) => {
-				let index = referKeys.indexOf(v.key)
-				// if (index === 0) {
-				// 	referKeys = referKeys.slice(1)
-				// 	return
-				// }
-				
-				if (index < 0) {
-					this.listChange.push({
-						type: 'add',
-						index: i,
-						prevList: prev,
-						beforeItem: currentInstance,
-						item: v
-					})
-					currentInstance = v
-					return
-				}
-				
-				this.listChange.push({
-					type: 'move',
-					index: i,
-					prevList: prev,
-					beforeItem: currentInstance,
-					item: prevObj[v.key]
-				})
-				referKeys.splice(index, 1)
-				currentInstance = prevObj[v.key]
-			})
-			return
+			if (this.listCompare(this.instance.childrenInstance, newInstance.childrenInstance)) {
+				childrenChange = true
+			}
 		}
-		// 一个列表一个不是列表
-		if ((!Util.isArray(prev) && Util.isArray(next)) || (Util.isArray(prev) && !Util.isArray(next))) {
+		if (this.isReactNode && childrenChange && !selfChange) {
+			this.changeList.push({
+				prev: this.instance,
+				next: newInstance,
+				type: UPDATE_TYPES.UPDATE
+			})
+		}
+		this.hasChange = selfChange || childrenChange
+		return this.hasChange
+	}
+	
+	// 节点对比
+	// 处理节点变更数组
+	compareInstance (prev, next, list) {
+		if (!prev && !next) {
 			return
 		}
 		
 		// 两个空节点 或者相同的文本节点
 		if (prev.nodeType === Constant.EMPTY_NODE && next.nodeType === Constant.EMPTY_NODE || prev.currentElement === next.currentElement) {
-			return
+			return false
 		}
 		
-		// 文本节点更新
-		if (prev.nodeType === Constant.TEXT_NODE && next.nodeType === Constant.TEXT_NODE) {
-			this.replaceList.push({
-				prev: prev,
-				next: next
-			})
+		let updater = {
+			isSelf: true,
+			list: list,
+			prev: prev,
+			next: next,
+			type: UPDATE_TYPES.REPLACE
 		}
 		
-		// key改变
-		if ((prev.key || next.key) && prev.key != next.key) {
-			this.delList.push({
-				prev: prev,
-				next: next
+		// 删除或添加，可认为是节点的替换
+		if (prev.nodeType === Constant.EMPTY_NODE || next.nodeType === Constant.EMPTY_NODE) {
+			this.changeList.push({
+				...updater
 			})
-			this.addList.push({
-				prev: prev,
-				next: next
-			})
+			return 'replace'
 		}
 		
-		//添加
-		if (prev.nodeType === Constant.EMPTY_NODE && next.nodeType !== Constant.EMPTY_NODE) {
-			this.addList.push({
-				prev: prev,
-				next: next
+		//文本节点更新
+		if (prev.nodeType === Constant.TEXT_NODE && next.nodeType === Constant.TEXT_NODE && prev.currentElement !== next.currentElement) {
+			this.changeList.push({
+				...updater
 			})
-			return
+			return 'replace'
 		}
 		
-		//删除
-		if (next.nodeType === Constant.EMPTY_NODE && prev.nodeType !== Constant.EMPTY_NODE) {
-			this.delList.push({
-				prev: prev,
-				next: next
+		//修改key
+		if ((prev.key || next.key) && prev.key !== next.key) {
+			this.changeList.push({
+				...updater
 			})
-			return
+			return 'replace'
 		}
 		
 		//类型修改
-		if (prev.nodeType !== next.nodeType
-			|| (prev.nodeType === Constant.REACT_NODE && prev.currentElement.type !== next.currentElement.type)
-			|| (prev.childrenInstance && next.childrenInstance && prev.childrenInstance.length !== next.childrenInstance.length)
+		if (prev.nodeType !== next.nodeType || (prev.currentElement.type !== next.currentElement.type)
 		) {
-			this.replaceList.push({
-				prev: prev,
-				next: next
+			this.changeList.push({
+				...updater
 			})
-			return
+			return 'replace'
 		}
 		
-		//更新
-		if (!Util.isEqual(next.currentElement.props, prev.currentElement.props)) {
-			this.updateList.push({
-				prev: prev,
-				next: next
-			})
+		//节点更新
+		if (this.updateCheck(prev, next, list)) {
+			return 'update'
 		}
+		
+		return false
 	}
 	
-	clear () {
-		this.addList = []
-		this.delList = []
-		this.replaceList = []
-		this.updateList = []
-		this.listChange = []
-		this.listMove = []
-		this.listAdd = []
-		this.listDel = []
-	}
-	
-	//获取列表中最后一个原生节点  arrDeep:是否深入数组节点
-	getLastNativeNode (list, arrDeep = true) {
-		if (!list || list.length === 0) {
+	// list 节点对比
+	listCompare (prev, next) {
+		if (!prev && !next) {
 			return false
 		}
-		let lastChild = list[list.length - 1]
-		let nativeNode
+		let hasChange = false
+		let nextObj = {}
+		let prevObj = {}
 		
-		//数组
-		if (Util.isArray(lastChild)) {
-			nativeNode = this.getLastNativeNode(lastChild, false)
-			if (nativeNode) {
-				return nativeNode
-			}
-		}
+		let nextKeys = next.map((v) => {
+			nextObj[v.key] = v
+			return v.key
+		})
 		
-		//包含子节点
-		if (arrDeep && lastChild && lastChild.childrenInstance) {
-			nativeNode = this.getLastNativeNode(lastChild.childrenInstance)
-			if (nativeNode) {
-				return nativeNode
-			}
-		}
-		
-		if (lastChild && lastChild.getNativeNode) {
-			nativeNode = lastChild.getNativeNode()
+		let prevReferKeys = []
+		let prevKeys = []
+		prev.forEach((v) => {
+			prevObj[v.key] = v
+			prevKeys.push(v.key)
 			
-			if (nativeNode) {
-				return nativeNode
-			}
-		}
-		return this.getLastNativeNode(list.slice(0, list.length - 1))
-	}
-	
-	insertAfter (node, instance, index) {
-		let clist = instance.childrenInstance
-		let maxIndex = clist.length - 1
-		let parentNode = instance.parentNode
-		
-		if (index === 0) {
-			reactDom.nodeBefore(node, parentNode)
-			return
-		}
-		if (index < maxIndex) {
-			let list = instance.childrenInstance.slice(0, index)
-			if (list.length > 0) {
-				let lastChild = this.getLastNativeNode(list)
-				if (lastChild) {
-					reactDom.nodeInsertAfter(node, lastChild)
-				} else {
-					reactDom.nodeBefore(node, parentNode)
-				}
+			//移除
+			if (nextKeys.indexOf(v.key) < 0) {
+				hasChange = true
+				this.changeList.push({
+					list: prev,
+					prev: v,
+					type: UPDATE_TYPES.REMOVE
+				})
 				return
 			}
-			reactDom.nodeBefore(node, parentNode)
-			return
-		}
-		if (index === maxIndex) {
-			reactDom.nodeAfter(node, parentNode)
-		}
-	}
-	
-	listUpdate () {
-		let clist = this.componentInstance.childrenInstance
-		this.listChange.forEach((v) => {
-			if (v.type === 'del') {
-				let index = v.prevList.indexOf(v.item)
-				v.prevList.splice(index, 1)
-				reactDom.nodeRemove(v.item.getNativeNode())
-				return
-			}
-			if (v.type === 'add') {
-				let node = v.item.mount()
-				v.prevList.splice(v.index, 0, v.item)
-				if (!v.beforeItem) {
-					let index = clist.indexOf(v.prevList)
-					this.insertAfter(node, this.componentInstance, index)
-				} else {
-					reactDom.nodeInsertAfter(node, v.beforeItem.getNativeNode())
-				}
-				return
-			}
-			if (v.type === 'move') {
-				let node = v.item.getNativeNode()
-				let i = v.prevList.indexOf(v.item)
-				v.prevList.splice(i, 1)
-				v.prevList.splice(v.index, 0, v.item)
+			prevReferKeys.push(v.key)
+		})
+		let currentInstance
+		next.forEach((v) => {
+			//未变
+			let index = prevReferKeys.indexOf(v.key)
+			if (index === 0) {
+				let arrL = 0
+				arrL += Util.isArray(prevObj[v.key]) ? 1 : 0
+				arrL += Util.isArray(v) ? 1 : 0
 				
-				if (!v.beforeItem) {
-					let index = clist.indexOf(v.prevList)
-					this.insertAfter(node, this.componentInstance, index)
+				if (arrL === 2) {
+					if (this.listCompare(prevObj[v.key], v)) {
+						hasChange = true
+					}
+				} else if (arrL === 1) {
+					this.changeList.push({
+						list: prev,
+						prev: prevObj[v.key],
+						next: v,
+						type: UPDATE_TYPES.REPLACE
+					})
+					hasChange = true
 				} else {
-					reactDom.nodeInsertAfter(node, v.beforeItem.getNativeNode())
+					//component对比
+					if (prevObj[v.key].compareComponent(v)) {
+						hasChange = true
+					}
 				}
+				prevReferKeys = prevReferKeys.slice(1)
+				currentInstance = prevObj[v.key]
+				return
+			}
+			
+			//新增
+			if (prevKeys.indexOf(v.key) < 0) {
+				
+				this.changeList.push({
+					list: prev,
+					next: v,
+					beforeItem: currentInstance,
+					type: UPDATE_TYPES.INSERT
+				})
+				currentInstance = v
+				hasChange = true
+				
+				return
+			}
+			
+			//移动
+			this.changeList.push({
+				type: UPDATE_TYPES.MOVE,
+				list: prev,
+				prev: prevObj[v.key],
+				beforeItem: currentInstance
+			})
+			
+			if (Util.isArray(prevObj[v.key]) && Util.isArray(v)) {
+				if (this.listCompare(prevObj[v.key], v)) {
+					hasChange = true
+				}
+			} else if (Util.isArray(prevObj[v.key])) {
+				this.changeList.push({
+					list: prev,
+					prev: prevObj[v.key],
+					next: v,
+					type: UPDATE_TYPES.REPLACE
+				})
+				hasChange = true
+			} else {
+				//component对比
+				if (prevObj[v.key].compareComponent(v)) {
+					hasChange = true
+				}
+			}
+			
+			hasChange = true
+			
+			prevReferKeys.splice(index, 1)
+			currentInstance = prevObj[v.key]
+		})
+		return hasChange
+	}
+	
+	//更新检测
+	updateCheck (prev, next, list) {
+		let prevProps = Object.assign({}, prev.currentElement.props)
+		let nextProps = Object.assign({}, next.currentElement.props)
+		delete(prevProps.children)
+		delete(nextProps.children)
+		
+		let propsChange = !Util.isEqual(nextProps, prevProps)
+		//更新
+		if (propsChange) {
+			this.changeList.push({
+				isSelf: true,
+				list: prev,
+				prev: prev,
+				next: next,
+				type: UPDATE_TYPES.UPDATE
+			})
+			
+			return true
+		}
+		return false
+		
+	}
+	
+	getLastIWithNode (list) {
+		if (list.length === 0) {
+			return false
+		}
+		let lastI = list[list.length - 1]
+		let node = lastI.getNativeNode()
+		if (node) {
+			return lastI
+		}
+		return this.getLastIWithNode(list.slice(0, list.length - 1))
+	}
+	
+	getFlatChildrenInstance (instance) {
+		return this.getChildrenInstance(instance.childrenInstance)
+	}
+	
+	getChildrenInstance (child) {
+		if (!child) {
+			return []
+		}
+		let li = []
+		child.forEach((v) => {
+			if (Util.isArray(v)) {
+				li = li.concat(this.getChildrenInstance(v))
+			} else {
+				li.push(v)
+			}
+		})
+		return li
+	}
+	
+	getLastNode (list, beforeItem) {
+		let flatChild
+		if (beforeItem) {
+			let beforeNode = beforeItem.getNativeNode()
+			if (beforeNode) {
+				return {
+					beforeNode: beforeNode
+				}
+			}
+			let l = list.slice(0, list.indexOf(beforeItem))
+			let child = this.getChildrenInstance(l)
+			let ins = this.getLastIWithNode(child)
+			
+			if (!ins && list.parentList) {
+				ins = this.getLastIWithNode(this.getChildrenInstance(list.parentList))
+			}
+			if (ins) {
+				return {
+					beforeNode: ins.getNativeNode()
+				}
+			}
+			return {
+				parentNode: beforeItem.parentNode
+			}
+		} else {
+			//创建临时item
+			let tempListItem = { temp: '' }
+			list.unshift(tempListItem)
+			let child = this.getFlatChildrenInstance(this.instance)
+			flatChild = child.slice(0, child.indexOf(tempListItem))
+			list.shift()
+		}
+		let lastinstance = this.getLastIWithNode(flatChild)
+		
+		if (!lastinstance) {
+			return {
+				parentNode: this.instance.getNativeNode()
+			}
+		}
+		return {
+			beforeNode: lastinstance.getNativeNode()
+		}
+	}
+	
+	//插入到index最后节点
+	insertAfter (node, beforeItem, list) {
+		let beforeInfo = this.getLastNode(list, beforeItem)
+		
+		if (beforeInfo.beforeNode) {
+			reactDom.nodeInsertAfter(node, beforeInfo.beforeNode)
+			return beforeInfo.beforeNode.parentNode
+		}
+		if (beforeInfo.parentNode) {
+			reactDom.nodeBefore(node, beforeInfo.parentNode)
+			return beforeInfo.parentNode
+		}
+	}
+	
+	renderInsertChange () {
+		this.insertList.forEach((v) => {
+			if (!v.list) {
+				v.list = v.prev.parentList
+			}
+			
+			let nodeChange = v.isSelf || !this.isReactNode
+			if (v.next.nodeType !== Constant.EMPTY_NODE && nodeChange) {
+				let child = ReactInstantiate.mountChildren(v.next)
+				let parentNode = this.insertAfter(child, v.beforeItem, v.list)
+				ReactInstantiate.childrenMountComplete(v.next, parentNode)
+			}
+			if (v.next.nodeType === Constant.EMPTY_NODE) {
+				v.next.parentNode = this.instance.getNativeNode()
+			}
+			
+			v.next.parentList = v.list
+			if (v.beforeItem) {
+				let index = v.list.indexOf(v.beforeItem)
+				v.list.splice(index + 1, 0, v.next)
+			} else {
+				v.list.unshift(v.next)
 			}
 		})
 	}
 	
-	run () {
-		let clist = this.componentInstance.childrenInstance
-		
-		//列表更新
-		this.listUpdate()
-		
-		//添加  已考虑数组混合的情况
-		this.addList.forEach((v) => {
-			let node = v.next.mount()
-			let index = clist.indexOf(v.prev)
-			this.insertAfter(node, this.componentInstance, index)
-			this.componentInstance.childrenInstance.splice(index, 1, v.next)
-		})
-		
-		//更新
+	renderUpdateList () {
 		this.updateList.forEach((v) => {
-			v.prev.updateComponent(v.next.currentElement)
-			v.prev.receiveComponent(v.next)
+			v.prev.updateComponent(v.next)
 		})
-		
-		//替换
+	}
+	
+	renderMoveList () {
+		this.moveList.forEach((v) => {
+			if (!v.list) {
+				v.list = v.prev.parentList
+			}
+			
+			if (v.isSelf || !this.isReactNode) {
+				let node = v.prev.getNativeNode()
+				if (node) {
+					this.insertAfter(node, v.beforeItem, v.list)
+				}
+			}
+			
+			let prevIndex = v.list.indexOf(v.prev)
+			v.list.splice(prevIndex, 1)
+			
+			v.prev.parentList = v.list
+			if (v.beforeItem) {
+				let index = v.list.indexOf(v.beforeItem)
+				v.list.splice(index, 0, v.prev)
+			} else {
+				v.list.unshift(v.prev)
+			}
+		})
+	}
+	
+	renderRemoveList () {
+		this.removeList.forEach((v) => {
+			if (!v.list) {
+				v.list = v.prev.parentList
+			}
+			if (v.isSelf || !this.isReactNode) {
+				if (Util.isArray(v.prev)) {
+					ReactInstantiate.unmountChildren(v.prev)
+				} else {
+					v.prev.willUnmount()
+					let prevNode = v.prev.getNativeNode()
+					if (prevNode) {
+						reactDom.nodeRemove(prevNode)
+					}
+					v.prev.unmount()
+				}
+			}
+			
+			let index = v.list.indexOf(v.prev)
+			v.list.splice(index, 1)
+		})
+	}
+	
+	//react节点的render更新,貌似只有替换节点的情况,其他的都是更新，其中删除或添加也算是替换
+	reactComponentChange (v) {
+		v.prev.parentInstance.componentInstance = v.next
+		if (v.next.nodeType !== Constant.EMPTY_NODE) {
+			let child = ReactInstantiate.mountChildren(v.next)
+			v.prev.parentInstance.parentNode.appendChild(child)
+			ReactInstantiate.childrenMountComplete(v.next, v.prev.parentInstance.parentNode)
+		}
+		if (v.prev.nodeType !== Constant.EMPTY_NODE) {
+			v.prev.willUnmount()
+			let prevNode = v.prev.getNativeNode()
+			if (prevNode) {
+				reactDom.nodeRemove(prevNode)
+			}
+			v.prev.unmount()
+		}
+	}
+	
+	renderReplaceList () {
 		this.replaceList.forEach((v) => {
-			let index = clist.indexOf(v.prev)
-			let node = v.next.mount()
-			this.componentInstance.childrenInstance.splice(index, 1, v.next)
-			reactDom.nodeReplace(node, v.prev.getNativeNode())
+			if (!v.list) {
+				v.list = v.prev.parentList
+			}
+			if (!v.list && v.prev.parentInstance) {
+				return this.reactComponentChange(v)
+			}
+			
+			if (v.next.nodeType !== Constant.EMPTY_NODE && (v.isSelf || !this.isReactNode)) {
+				let child = ReactInstantiate.mountChildren(v.next)
+				let parentNode = this.insertAfter(child, v.prev, v.list)
+				ReactInstantiate.childrenMountComplete(v.next, parentNode)
+			}
+			if (v.next.nodeType === Constant.EMPTY_NODE) {
+				v.next.parentNode = v.prev.parentNode
+			}
+			v.next.parentList = v.list
+			let prevIndex = v.list.indexOf(v.prev)
+			v.list.splice(prevIndex, 0, v.next)
+			this.removeList.push({
+				isSelf: v.isSelf,
+				list: v.list,
+				prev: v.prev,
+				next: v.next
+			})
+		})
+	}
+	
+	//渲染更新
+	renderChange () {
+		
+		if (this.changeList.length === 0) {
+			return
+		}
+		this.moveList = []
+		this.removeList = []
+		this.insertList = []
+		this.updateList = []
+		this.replaceList = []
+		
+		this.changeList.forEach((v) => {
+			v.type === UPDATE_TYPES.MOVE && this.moveList.push(v)
+			v.type === UPDATE_TYPES.REMOVE && this.removeList.push(v)
+			v.type === UPDATE_TYPES.INSERT && this.insertList.push(v)
+			v.type === UPDATE_TYPES.UPDATE && this.updateList.push(v)
+			v.type === UPDATE_TYPES.REPLACE && this.replaceList.push(v)
 		})
 		
-		//删除
-		this.delList.forEach((v) => {
-			let index = clist.indexOf(v.prev)
-			this.componentInstance.childrenInstance.splice(index, 1, v.next)
-			reactDom.nodeRemove(v.prev.getNativeNode())
-		})
-		
+		this.renderInsertChange()
+		this.renderUpdateList()
+		this.renderMoveList()
+		this.renderReplaceList()
+		this.renderRemoveList()
+	}
+	
+	runChildren (child) {
+		if (Util.isArray(child)) {
+			child.forEach((v) => {
+				this.runChildren(v)
+			})
+		} else {
+			child && child.reactUpdater && child.reactUpdater.run()
+		}
+	}
+	
+	//执行更新
+	run () {
+		this.renderChange()
+		if (this.instance.nodeType !== Constant.REACT_NODE) {
+			this.runChildren(this.instance.childrenInstance)
+		}
 		this.clear()
 	}
 }

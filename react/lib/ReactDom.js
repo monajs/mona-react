@@ -278,14 +278,14 @@ class ReactDom {
 			if (!props.dangerouslySetInnerHTML || !props.dangerouslySetInnerHTML.__html) {
 				return
 			}
-			if (props.dangerouslySetInnerHTML.__html != node.innerHTML) {
+			if (props.dangerouslySetInnerHTML.__html !== node.innerHTML) {
 				node.innerHTML = props.dangerouslySetInnerHTML.__html
 			}
 			Util.arrayDelete(propKeys, 'dangerouslySetInnerHTML')
 		}
 		
 		propKeys.forEach((v) => {
-			if (props[v] == prevProps[v]) {
+			if (props[v] === prevProps[v]) {
 				return
 			}
 			
@@ -297,7 +297,7 @@ class ReactDom {
 			
 			if (DOMPropertyConfig.isProperty(v)) {
 				let attr = Util.upperToLine(v)
-				if (v == 'htmlFor') {
+				if (v === 'htmlFor') {
 					attr = 'for'
 				}
 				if (val === false) {

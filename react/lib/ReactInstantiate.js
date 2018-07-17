@@ -191,18 +191,6 @@ export default class ReactInstantiate {
 		})
 	}
 	
-	// 识别节点的ref属性, 并返回dom信息
-	// 是react节点的化返回component实例信息，否则返回节点原生信息
-	refToOwner (instance) {
-		if ((instance.nodeType === Constant.REACT_NODE || instance.nodeType === Constant.NATIVE_NODE )
-			&& instance.currentElement.ref && instance.currentElement._owner) {
-			let ownerObj = instance.currentElement._owner.componentObj
-			
-			ownerObj.refs = ownerObj.refs || {}
-			ownerObj.refs[instance.currentElement.ref] = instance.componentObj || instance.nativeNode
-		}
-	}
-	
 	// 获取原生的节点
 	getNativeNode () {
 		if (this.componentInstance) {
@@ -227,28 +215,153 @@ export default class ReactInstantiate {
 		})
 	}
 	
-	// 节点检查，适用react节点
-	receiveComponent (newInstance) {
+	//卸载节点
+	static unmountChildren (child) {
+		child.forEach((v) => {
+			if (Util.isArray(v)) {
+				ReactInstantiate.unmountChildren(v)
+			} else {
+				v.willUnmount()
+				let node = v.getNativeNode()
+				if (node) {
+					reactDom.nodeRemove(node)
+				}
+				v.unmount()
+			}
+		})
+	}
+	
+	//将子元素转为一维数组
+	static deepReactChild (child, fun) {
+		if (!child) {
+			return
+		}
+		if (!Util.isArray(child) && child.nodeType === Constant.REACT_NODE) {
+			return fun(child)
+		}
+		if (child.length === 0) {
+			return
+		}
+		child.forEach((v) => {
+			if (Util.isArray(v)) {
+				ReactInstantiate.deepReactChild(v, fun)
+			} else {
+				return fun(v)
+			}
+		})
+	}
+	
+	willUnmount () {
+		if (this.componentObj && this.componentObj.componentWillUnmount) {
+			this.componentObj.componentWillUnmount()
+		}
+		this.childWillUnmount()
+	}
+	
+	childWillUnmount () {
+		if (this.componentInstance) {
+			this.componentInstance.willUnmount()
+		} else {
+			ReactInstantiate.deepReactChild(this.childrenInstance, (v) => {
+				v.willUnmount()
+			})
+		}
+	}
+	
+	//卸载节点信息,事件消息等
+	unmount () {
+		if (this.nodeType === Constant.REACT_NODE || this.nodeType === Constant.NATIVE_NODE) {
+			if (this.currentElement.ref && this.currentElement._owner) {
+				let ownerObj = this.currentElement._owner.componentObj
+				let oldRef = ownerObj.refs[this.currentElement.ref]
+				let nodeOrI = this.componentObj || this.nativeNode
+				if (oldRef && oldRef === nodeOrI) {
+					delete(ownerObj.refs[this.currentElement.ref])
+				}
+			}
+		}
+		if (this.componentInstance) {
+			this.componentInstance.unmount()
+		} else {
+			ReactInstantiate.deepReactChild(this.childrenInstance, (v) => {
+				v.unmount()
+			})
+		}
+	}
+	
+	// 识别节点的ref属性, 并返回dom信息
+	// 是react节点的化返回component实例信息，否则返回节点原生信息
+	refToOwner (instance) {
+		if ((instance.nodeType === Constant.REACT_NODE || instance.nodeType === Constant.NATIVE_NODE )
+			&& instance.currentElement.ref && instance.currentElement._owner) {
+			let ownerObj = instance.currentElement._owner.componentObj
+			
+			ownerObj.refs = ownerObj.refs || {}
+			ownerObj.refs[instance.currentElement.ref] = instance.componentObj || instance.nativeNode
+		}
+	}
+	
+	// native节点更新
+	updateComponent (next) {
+		// 更新提示
+		if (this.componentObj && this.componentObj.componentWillReceiveProps) {
+			this.componentObj.componentWillReceiveProps(next.currentElement.props)
+		}
+		let prevProps = this.currentElement.props
+		if (this.nodeType === Constant.REACT_NODE) {
+			// componentWillUpdate生命周期钩子函数执行点
+			this.componentObj.componentWillUpdate && this.componentObj.componentWillUpdate(next.currentElement.props)
+			
+			this.currentElement.props = next.currentElement.props
+			this.childrenInstance = next.childrenInstance
+			this.componentObj.props = this.currentElement.props
+			
+			let hasChange = this.receiveComponent()
+			// componentDidMount生命周期钩子函数执行点
+			this.componentObj.componentDidUpdate && this.componentObj.componentDidUpdate(prevProps)
+		} else {
+			this.currentElement.props = next.currentElement.props
+			reactDom.propsChange(this.nativeNode, prevProps, this.currentElement.props)
+		}
+	}
+	
+	//节点对比
+	compareComponent (newInstance) {
+		!this.reactUpdater && (this.reactUpdater = new ReactUpdater(this))
+		this.reactUpdater.clear()
+		return this.reactUpdater.compare(newInstance)
+	}
+	
+	//存储渲染回调
+	receiveComponentCallbacks = []
+	
+	//节点diff
+	receiveComponent (newInstance, callback) {
+		if (this.nodeType === Constant.REACT_NODE && !this.hasMount) {
+			return
+		}
 		if (this.componentObj && Util.isFun(this.componentObj.shouldcomponentupdate) && !this.componentObj.shouldcomponentupdate()) {
 			return
 		}
 		
+		if (Util.isFun(callback)) {
+			this.receiveComponentCallbacks.push(callback)
+		}
+		
 		//react节点检测更新
-		if (this.nodeType === Constant.REACT_NODE) {
+		if (!newInstance && this.nodeType === Constant.REACT_NODE) {
+			
 			let element = this.componentObj.render()
-			let newComponentInstance = new ReactInstantiate(element)
-			this.componentInstance.receiveComponent(newComponentInstance)
-			return
+			let newComponentInstance = new ReactInstantiate(element, null, this)
+			return this.componentInstance.receiveComponent(newComponentInstance, callback)
 		}
+		let hasChange = this.compareComponent(newInstance)
 		
-		if (!this.reactUpdater) {
-			this.reactUpdater = new ReactUpdater(this)
+		if (hasChange) {
+			this.reactUpdater.run()
 		}
-		
-		this.reactUpdater.compareInstance(newInstance)
-		
-		console.log(this.reactUpdater)
-		
-		this.reactUpdater.run()
+		this.receiveComponentCallbacks.forEach(v => v)
+		this.receiveComponentCallbacks = []
+		return hasChange
 	}
 }
