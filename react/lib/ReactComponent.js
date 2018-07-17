@@ -8,7 +8,6 @@ export default class ReactComponent {
 		if (!this.state) {
 			this.state = {}
 		}
-		// let prevState = Object.assign({}, this.state)
 		Object.assign(this.state, data)
 		this._reactInternalInstance.receiveComponent(null, callback)
 	}
