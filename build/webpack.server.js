@@ -1,5 +1,5 @@
-var path = require('path')
-var serverConf = {
+const path = require('path')
+const serverConf = {
 	contentBase: path.resolve(__dirname, '../src'),
 	progress: false,
 	hot: true,

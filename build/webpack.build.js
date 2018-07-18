@@ -1,11 +1,11 @@
-var webpack = require('webpack')
-var path = require('path')
-var HtmlWebpackPlugin = require('html-webpack-plugin')
-var ExtractTextPlugin = require('extract-text-webpack-plugin')
-var UglifyJSPlugin = require('uglifyjs-webpack-plugin')
-var config = require('./webpack.base')
-var CopyWebpackPlugin = require('copy-webpack-plugin')
-var fs = require('fs-extra')
+const webpack = require('webpack')
+const path = require('path')
+const HtmlWebpackPlugin = require('html-webpack-plugin')
+const ExtractTextPlugin = require('extract-text-webpack-plugin')
+const UglifyJSPlugin = require('uglifyjs-webpack-plugin')
+const config = require('./webpack.base')
+const CopyWebpackPlugin = require('copy-webpack-plugin')
+const fs = require('fs-extra')
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin
 
 Object.assign(config.output, {

@@ -8,7 +8,7 @@
 		"start": "node ./build/webpack.dev.js",
 		"build": "export NODE_ENV=prodution && node ./build/webpack.build.js",
 		"config": "babel buildSrc --out-dir build",
-		"react": "babel-node ./build/react.bundle.js"
+		"react": "export NODE_ENV=prodution && node ./build/react.bundle.js"
 	},
 	"devDependencies": {
 		"babel-core": "^6.26.0",
@@ -44,8 +44,6 @@
 		"classnames": "2.2.5",
 		"es6-promise": "3.2.1",
 		"fastclick": "1.0.6",
-		"react": "15.6.1",
-		"react-dom": "15.6.1",
 		"uglifyjs-webpack-plugin": "^0.4.6"
 	}
 }

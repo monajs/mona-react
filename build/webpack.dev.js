@@ -1,13 +1,13 @@
-var webpack = require('webpack')
-var path = require('path')
-var HtmlWebpackPlugin = require('html-webpack-plugin')
-var ExtractTextPlugin = require('extract-text-webpack-plugin')
-var config = require('./webpack.base')
-var appConf = require('./app.conf')
-var webpackServerConf = require('./webpack.server.js')
-var webpackServer = require('webpack-dev-server')
-var OpenBrowserPlugin = require('open-browser-webpack-plugin')
-var CopyWebpackPlugin = require('copy-webpack-plugin')
+const webpack = require('webpack')
+const path = require('path')
+const HtmlWebpackPlugin = require('html-webpack-plugin')
+const ExtractTextPlugin = require('extract-text-webpack-plugin')
+const config = require('./webpack.base')
+const appConf = require('./app.conf')
+const webpackServerConf = require('./webpack.server.js')
+const webpackServer = require('webpack-dev-server')
+const OpenBrowserPlugin = require('open-browser-webpack-plugin')
+const CopyWebpackPlugin = require('copy-webpack-plugin')
 
 Object.assign(config.output, {
 	filename: '[name].js',
