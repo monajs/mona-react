@@ -11,7 +11,7 @@ const config = {
 	output: {
 		path: path.resolve(__dirname, '../lib'),
 		publicPath: '/',
-		filename: 'react.min.js'
+		filename: 'index.js'
 	},
 	resolve: {
 		extensions: ['.js', '.jsx'],
@@ -51,8 +51,8 @@ const config = {
 	}
 }
 
-fs.remove(path.resolve(__dirname, '../assets'))
-console.log('react.min.js已删除')
+fs.remove(path.resolve(__dirname, '../lib'))
+console.log('lib已删除')
 console.log('开始打包')
 
 webpack(config, (err, stats) => {

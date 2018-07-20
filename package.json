@@ -1,14 +1,28 @@
 {
-	"name": "mo-react",
-	"version": "0.0.1",
+	"name": "moreact",
+	"version": "0.0.2",
 	"author": "杨玺",
 	"email": "599321378@qq.com",
 	"description": "react mini库",
+	"keywords": [
+		"mo",
+		"mona",
+		"react",
+		"react-mona"
+	],
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/func-star/mo-react"
+	},
+	"files": [
+		"lib"
+	],
+	"main": "./lib",
 	"scripts": {
 		"start": "node ./build/webpack.dev.js",
 		"build": "export NODE_ENV=prodution && node ./build/webpack.build.js",
 		"config": "babel buildSrc --out-dir build",
-		"react": "export NODE_ENV=prodution && node ./build/react.bundle.js"
+		"react": "rm -rf lib&&cp -r react lib&&babel react --out-dir lib"
 	},
 	"devDependencies": {
 		"babel-core": "^6.26.0",

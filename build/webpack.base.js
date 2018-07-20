@@ -21,7 +21,7 @@ module.exports = {
 			'src': path.resolve(__dirname, '../src'),
 			'classnames': path.resolve('./node_modules/classnames'),
 			'autoprefixer': path.resolve('./node_modules/autoprefixer'),
-			'react': path.resolve(__dirname, '../react'),
+			'react': path.resolve(__dirname, '../lib'),
 			'react-dom': path.resolve(__dirname, '../reactDom')
 		}
 	},
