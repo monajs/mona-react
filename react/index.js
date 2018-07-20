@@ -4,12 +4,12 @@ import Children from './lib/ReactChildren'
 import Constant from './constant'
 
 class React {
-	version = Constant.VERSION
+	env = 'production'
+	VERSION = Constant.VERSION
 	Component = Component
 	Children = Children
 	createElement = ReactElement.createElement
 	cloneElement = ReactElement.cloneElement
-	env = 'production'
 	
 	setEnv (env) {
 		this.env = env

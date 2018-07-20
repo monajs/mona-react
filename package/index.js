@@ -26,12 +26,12 @@ var React = function () {
 	function React() {
 		_classCallCheck(this, React);
 
-		this.version = _constant2.default.VERSION;
+		this.env = 'production';
+		this.VERSION = _constant2.default.VERSION;
 		this.Component = _ReactComponent2.default;
 		this.Children = _ReactChildren2.default;
 		this.createElement = _ReactElement2.default.createElement;
 		this.cloneElement = _ReactElement2.default.cloneElement;
-		this.env = 'production';
 	}
 
 	_createClass(React, [{

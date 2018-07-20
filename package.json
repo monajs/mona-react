@@ -1,6 +1,6 @@
 {
-	"name": "moreact",
-	"version": "0.0.2",
+	"name": "mo-react",
+	"version": "0.0.9",
 	"author": "杨玺",
 	"email": "599321378@qq.com",
 	"description": "react mini库",
@@ -15,14 +15,18 @@
 		"url": "git+https://github.com/func-star/mo-react"
 	},
 	"files": [
-		"lib"
+		"lib",
+		"constant.js",
+		"data.js",
+		"index.js",
+		"util.js"
 	],
-	"main": "./lib",
+	"main": "index.js",
 	"scripts": {
 		"start": "node ./build/webpack.dev.js",
 		"build": "export NODE_ENV=prodution && node ./build/webpack.build.js",
 		"config": "babel buildSrc --out-dir build",
-		"react": "rm -rf lib&&cp -r react lib&&babel react --out-dir lib"
+		"babel": "node ./build/react.bundle.js"
 	},
 	"devDependencies": {
 		"babel-core": "^6.26.0",
@@ -50,7 +54,10 @@
 		"style-loader": "^0.19.0",
 		"webpack": "^3.8.1",
 		"webpack-bundle-analyzer": "^2.10.0",
-		"webpack-dev-server": "^2.9.7"
+		"webpack-dev-server": "^2.9.7",
+		"chalk": "^2.4.1",
+		"console.table": "^0.10.0",
+		"deep-extend": "^0.6.0"
 	},
 	"dependencies": {
 		"axios": "^0.17.1",
