@@ -5,23 +5,23 @@ class Util {
 	forEach (v, fun) {
 		Array.prototype.forEach.call(v, fun)
 	}
-	
+
 	isUndefined (v) {
 		return typeof(v) === 'undefined'
 	}
-	
+
 	isFun (v) {
 		return v instanceof Function
 	}
-	
+
 	isArray (v) {
 		return v instanceof Array
 	}
-	
+
 	upperToLine (v) {
 		return v.replace(/[A-Z]/g, function (w) {return '-' + w.toLowerCase()})
 	}
-	
+
 	//删除数组元素
 	arrayDelete (array, val) {
 		let index = array.indexOf(val)
@@ -30,7 +30,7 @@ class Util {
 		}
 		array.splice(index, 1)
 	}
-	
+
 	toArray (v) {
 		if (this.isArray(v)) {
 			return v
@@ -40,7 +40,7 @@ class Util {
 		}
 		return []
 	}
-	
+
 	arrayFlat (v) {
 		if (!v) {
 			return []
@@ -58,12 +58,12 @@ class Util {
 		}
 		return [v]
 	}
-	
+
 	//对比
 	toString (a) {
 		return String(a)
 	}
-	
+
 	eq (a, b) {
 		if (a === b) return a !== 0 || 1 / a === 1 / b
 		if (a == null || b == null) return false
@@ -72,7 +72,7 @@ class Util {
 		if (type !== 'function' && type !== 'object' && typeof b != 'object') return false
 		return this.deepEq(a, b)
 	}
-	
+
 	deepEq (a, b) {
 		let className = this.toString(a)
 		if (className !== this.toString(b)) return false
@@ -89,11 +89,11 @@ class Util {
 			case '[object Symbol]':
 				return SymbolProto.valueOf.call(a) === SymbolProto.valueOf.call(b)
 		}
-		
+
 		let areArrays = className === '[object Array]'
 		if (!areArrays) {
 			if (typeof a != 'object' || typeof b != 'object') return false
-			
+
 			let aCtor = a.constructor, bCtor = b.constructor
 			if (aCtor !== bCtor && !(this.isFun(aCtor) && aCtor instanceof aCtor &&
 					this.isFun(bCtor) && bCtor instanceof bCtor)
@@ -122,15 +122,15 @@ class Util {
 		}
 		return true
 	};
-	
+
 	has (obj, key) {
 		return obj.hasOwnProperty(key)
 	}
-	
+
 	isEqual (a, b) {
 		return this.eq(a, b)
 	};
-	
+
 	getDomInstance (dom) {
 		if (!dom) {
 			return null
@@ -140,7 +140,7 @@ class Util {
 		}
 		return null
 	}
-	
+
 	getDomOwner (dom) {
 		let instance = this.getDomInstance(dom)
 		if (!instance) {
@@ -148,7 +148,7 @@ class Util {
 		}
 		return instance._currentElement._owner
 	}
-	
+
 	getReactDom (dom) {
 		if (!dom) {
 			return null
@@ -159,16 +159,16 @@ class Util {
 		}
 		return owner._instance
 	};
-	
+
 	log () {
 		if (React.env !== 'development') {
 			return
 		}
-		
+
 		console.log('--Mona')
 		Function.prototype.apply.call(console.log, console, arguments)
 	}
-	
+
 	// 获取key唯一的list
 	getUniqueList (list) {
 		let keyList = []
@@ -177,7 +177,7 @@ class Util {
 			if (v && v.key) {
 				if (keyList.indexOf(v.key) === -1) {
 					keyList.push(v.key)
-					// TODO 优化push方式，直接从数组删除，效率很更高
+					// TODO 优化push方式，直接从数组删除，效率会更高
 					resList.push(v);
 				}
 			}else {
@@ -185,7 +185,7 @@ class Util {
 			}
 		})
 		return resList
-		
+
 	}
 }
 

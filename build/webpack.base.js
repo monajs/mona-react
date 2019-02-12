@@ -18,11 +18,7 @@ module.exports = {
 			path.resolve(__dirname, '../src')
 		],
 		alias: {
-			'src': path.resolve(__dirname, '../src'),
-			'classnames': path.resolve('./node_modules/classnames'),
-			'autoprefixer': path.resolve('./node_modules/autoprefixer'),
-			'react': path.resolve(__dirname, '../package'),
-			'react-dom': path.resolve(__dirname, '../reactDom')
+			'react': path.resolve(__dirname, '../react')
 		}
 	},
 	resolveLoader: {

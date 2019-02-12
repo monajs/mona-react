@@ -1,7 +1,8 @@
 import React, { Component, version } from 'react'
 
+import { render } from 'react/reactDom'
+
 // React.setEnv('development')
-import { render } from 'react-dom'
 
 class App2 extends Component {
 	render () {
@@ -12,19 +13,27 @@ class App2 extends Component {
 	}
 }
 
+class App3 extends Component {
+	render () {
+		return (
+			<div>123</div>
+		)
+	}
+}
+
 class App extends Component {
 	state = {
 		list: ['a', 'b', 'c', 'd', 'c'],
 		title: '杨玺测试',
 		size: 5
 	}
-	
+
 	componentWillMount () {
 	}
-	
+
 	componentDidMount () {
 	}
-	
+
 	onClick () {
 		this.setState({
 			list: ['c', 'b', 'f', 'd', 'f'],
@@ -32,7 +41,7 @@ class App extends Component {
 			size: this.state.size += 1
 		})
 	}
-	
+
 	render () {
 		const { children } = this.props
 		return (
@@ -51,8 +60,8 @@ class App extends Component {
 				<If condition={this.state.dis}>
 					up
 				</If>
-				<For each="item" of={this.state.list}>
-					<div className="klass" key={item} id={item}>{item}</div>
+				<For each='item' of={this.state.list}>
+					<div className='klass' key={item} id={item}>{item}</div>
 				</For>
 				<If condition={this.state.dis}>
 					down
@@ -75,5 +84,5 @@ let a = (
 		</App>
 	</div>
 )
-render(a, document.getElementById('appWrapper'))
+render(<App3 />, document.getElementById('appWrapper'))
 

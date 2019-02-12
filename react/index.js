@@ -10,7 +10,7 @@ class React {
 	Children = Children
 	createElement = ReactElement.createElement
 	cloneElement = ReactElement.cloneElement
-	
+
 	setEnv (env) {
 		this.env = env
 	}

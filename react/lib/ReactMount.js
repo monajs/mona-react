@@ -18,7 +18,7 @@ export default class ReactMount {
 			Util.log('挂载创建的dom:', nativeNode)
 		}
 	}
-	
+
 	static unmountComponentAtNode (node) {
 		if (!(node instanceof Node)) {
 			return
@@ -32,7 +32,7 @@ export default class ReactMount {
 			}
 		})
 	}
-	
+
 	static findDOMNode (componentOrElement) {
 		if (!componentOrElement) {
 			return
