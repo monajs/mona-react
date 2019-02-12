@@ -1,19 +1,16 @@
 {
-  "name": "moreact",
-  "license": "ISC",
-  "version": "0.0.9",
+  "name": "@monajs/react",
+  "version": "1.0.0",
   "author": "杨玺",
   "email": "599321378@qq.com",
-  "description": "react mini库",
+  "description": "Mona系列 - 迷你React",
   "keywords": [
-    "mo",
     "mona",
-    "react",
-    "react-mona"
+    "react"
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/func-star/mo-react"
+    "url": "git+https://github.com/monajs/mona-react"
   },
   "files": [
     "lib",

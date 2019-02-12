@@ -60,8 +60,8 @@ class App extends Component {
 				<If condition={this.state.dis}>
 					up
 				</If>
-				<For each='item' of={this.state.list}>
-					<div className='klass' key={item} id={item}>{item}</div>
+				<For each='item' of={this.state.list} index='index'>
+					<div className='klass' key={index} id={item}>{item}</div>
 				</For>
 				<If condition={this.state.dis}>
 					down
@@ -84,5 +84,5 @@ let a = (
 		</App>
 	</div>
 )
-render(<App3 />, document.getElementById('appWrapper'))
+render(a, document.getElementById('appWrapper'))
 
