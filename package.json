@@ -1,6 +1,6 @@
 {
 	"name": "@monajs/react",
-	"version": "1.0.0",
+	"version": "1.1.1",
 	"author": "杨玺",
 	"email": "599321378@qq.com",
 	"description": "Mona系列 - 迷你React",
@@ -14,6 +14,7 @@
 	},
 	"files": [
 		"lib",
+		"reactDom.js",
 		"constant.js",
 		"data.js",
 		"index.js",

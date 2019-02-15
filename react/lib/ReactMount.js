@@ -2,7 +2,6 @@ import ReactInstantiate from './ReactInstantiate'
 import Util from '../util'
 
 export default class ReactMount {
-
 	static render (nextElement, container, callback) {
 		if (Util.isArray(nextElement)) {
 			nextElement.forEach(v => {

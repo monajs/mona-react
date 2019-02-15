@@ -24,5 +24,6 @@ exec(babelCmd, (error, stdout) => {
 			main
 		}, packageJsonPath)
 		log.success('生成package成功！')
+		exec(`cp ${process.cwd()}/README.md ${process.cwd()}/package/README.md`)
 	}
 })
