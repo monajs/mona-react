@@ -5,9 +5,6 @@
 
 [![npm](https://img.shields.io/npm/v/@monajs/react.svg?style=flat-square)](https://www.npmjs.com/package/@monajs/react) [![npm](https://img.shields.io/npm/dt/@monajs/react.svg?style=flat-square)](https://www.npmjs.com/package/@monajs/react)
 
-## 联系我
-> 微信：599321378
-
 ## 使用场景
 
 * 当你开发的组件或者 sdk 有跨框架的需求时，可以考虑使用。
@@ -44,3 +41,6 @@ class App extends Component {
 
 render(<App />, document.getElementById('appWrapper'))
 ```
+
+## 联系我
+> 微信：yx12032331
